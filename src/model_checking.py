@@ -30,10 +30,25 @@ def get_all_models(atoms: set[str]) -> list[dict[str, bool]]:
     Hint: Piensa en como representar los numeros del 0 al 2^n - 1 en binario.
           Cada bit corresponde al valor de verdad de un atomo.
     """
-    # === YOUR CODE HERE ===
-    raise NotImplementedError("Implementa get_all_models()")
-    # === END YOUR CODE ===
-
+    models = []
+    n = len(atoms)
+    for i in range(0,2**n):
+        number = i
+        binary_number = bin(number)[2:]
+        if len(binary_number)<n:
+            num_zeros = n - len(binary_number)
+            binary_number = num_zeros*'0' + binary_number
+        dict = {}
+        counter = 0
+        for atom in atoms:
+            if binary_number[counter] == '0':
+                dict[atom] = False
+            else:
+                dict[atom] = True 
+            counter += 1
+        models.append(dict)
+            
+    return models
 
 def check_satisfiable(formula: Formula) -> tuple[bool, dict[str, bool] | None]:
     """
@@ -53,9 +68,15 @@ def check_satisfiable(formula: Formula) -> tuple[bool, dict[str, bool] | None]:
     Hint: Genera todos los modelos con get_all_models(), luego evalua
           la formula en cada uno usando evaluate().
     """
-    # === YOUR CODE HERE ===
-    raise NotImplementedError("Implementa check_satisfiable()")
-    # === END YOUR CODE ===
+    satisfiable = False
+    model = None
+    models = get_all_models(formula.get_atoms())
+    for m in models:
+        if formula.evaluate(m):
+            satisfiable = True
+            model = m
+            break
+    return (satisfiable, model)
 
 
 def check_valid(formula: Formula) -> bool:
@@ -75,9 +96,12 @@ def check_valid(formula: Formula) -> bool:
     Hint: Una formula es valida si y solo si su negacion es insatisfacible.
           Alternativamente, verifica que sea verdadera en TODOS los modelos.
     """
-    # === YOUR CODE HERE ===
-    raise NotImplementedError("Implementa check_valid()")
-    # === END YOUR CODE ===
+    models = get_all_models(formula.get_atoms())
+    for m in models:
+        if not formula.evaluate(m):
+            return False
+    return True
+    
 
 
 def check_entailment(kb: list[Formula], query: Formula) -> bool:
@@ -100,9 +124,26 @@ def check_entailment(kb: list[Formula], query: Formula) -> bool:
           Es decir, no existe un modelo donde toda la KB sea verdadera
           y la query sea falsa.
     """
-    # === YOUR CODE HERE ===
-    raise NotImplementedError("Implementa check_entailment()")
-    # === END YOUR CODE ===
+    if kb == []:
+        return check_valid(query)
+    all_atoms = set()
+    for formula in kb:
+        frozen_set = formula.get_atoms()
+        for atom in frozen_set:
+            all_atoms.add(atom)
+    for atom in query.get_atoms():
+        all_atoms.add(atom)
+    
+    models = get_all_models(all_atoms)
+    for m in models:
+        kb_true = True
+        for formula in kb:
+            if not formula.evaluate(m):
+                kb_true = False
+                break
+        if kb_true and not query.evaluate(m):
+            return False
+    return True
 
 
 def truth_table(formula: Formula) -> list[tuple[dict[str, bool], bool]]:
@@ -124,6 +165,8 @@ def truth_table(formula: Formula) -> list[tuple[dict[str, bool], bool]]:
 
     Hint: Combina get_all_models() y evaluate().
     """
-    # === YOUR CODE HERE ===
-    raise NotImplementedError("Implementa truth_table()")
-    # === END YOUR CODE ===
+    list = []
+    models = get_all_models(formula.get_atoms())
+    for m in models:
+        list.append((m, formula.evaluate(m)))
+    return list
