@@ -162,11 +162,18 @@ def distribute_or_over_and(formula: Formula) -> Formula:
     Nota: Esta funcion se llama DESPUES de mover negaciones hacia adentro,
           asi que solo veras Atom, Not(Atom), And y Or.
     """
-    if isinstance(formula, Atom) or ((isinstance(formula, Not) and isinstance(formula.operand, Atom))):
+    if isinstance(formula, Atom) or isinstance(formula, Not):
         return formula
     if isinstance(formula, Or):
-        
-        return Or(*(distribute_or_over_and(d) for d in formula.disjuncts))
+        disjuncts = [distribute_or_over_and(d) for d in formula.disjuncts]
+        i=0
+        for subformula in disjuncts:
+           if isinstance(subformula, And):
+               rest = disjuncts[:i] + disjuncts[i+1:]
+               distributed = And(*[distribute_or_over_and(Or(*(rest + [c]))) for c in subformula.conjuncts])
+               return distributed
+           i+=1 
+        return Or(*disjuncts)
     
     if isinstance(formula, And):
         return And(*(distribute_or_over_and(c) for c in formula.conjuncts))
@@ -195,10 +202,48 @@ def flatten(formula: Formula) -> Formula:
           Igual para Or con sus disjuncts.
           Si al final solo queda 1 elemento, retornalo directamente.
     """
-    # === YOUR CODE HERE ===
-    raise NotImplementedError("Implementa flatten()")
-    # === END YOUR CODE ===
-
+    if isinstance(formula, Atom):
+        return formula
+    if isinstance(formula, Not):
+        return Not(flatten(formula.operand))
+    
+    if isinstance(formula, And):
+        conjuncts = []
+        for c in formula.conjuncts:
+            flat_c = flatten(c)
+            if isinstance(flat_c, And):
+                conjuncts.extend(flat_c.conjuncts)
+            else:
+                conjuncts.append(flat_c)
+        if len(conjuncts) == 1:
+            return conjuncts[0]
+        return And(*conjuncts)
+    
+    if isinstance(formula, Or):
+        disjuncts = []
+        for d in formula.disjuncts:
+            flat_d = flatten(d)
+            if isinstance(flat_d, Or):
+                disjuncts.extend(flat_d.disjuncts)
+            else:
+                disjuncts.append(flat_d)
+        if len(disjuncts) == 1:
+            return disjuncts[0]
+        return Or(*disjuncts)
+    
+    if isinstance(formula, Or):
+        disjuncts = []
+        for d in formula.disjuncts:
+            flat_d = flatten(d)
+            if isinstance(flat_d, Or):
+                disjuncts.extend(flat_d.disjuncts)
+            else:
+                disjuncts.append(flat_d)
+        if len(disjuncts) == 1:
+            return disjuncts[0]
+        return Or(*disjuncts)
+    
+    return formula
 
 # --- PIPELINE COMPLETO ---
 
