@@ -37,6 +37,84 @@ def crear_kb() -> KnowledgeBase:
 
     # === YOUR CODE HERE ===
 
+    # "Elena fue vista en el vagón privado durante el robo; sus huellas están en el estuche"
+    kb.add_fact(Predicate("en_escena", (elena,)))
+    kb.add_fact(Predicate("huellas_en_objeto", (elena, estuche_joyas)))
+
+    # "Don Rodrigo fue grabado por la cámara en el vagón de equipaje durante toda la noche"
+    kb.add_fact(Predicate("grabado_en_camara", (don_rodrigo, vagon_equipaje)))
+
+    # "El vagón de equipaje es el extremo opuesto al vagón privado"
+    kb.add_fact(Predicate("lugar_alejado_de_escena", (vagon_equipaje,)))
+
+    # "La Marquesa es la víctima directa del robo"
+    kb.add_fact(Predicate("es_victima", (marquesa,)))
+
+    # "La Marquesa acusa a Elena"
+    kb.add_fact(Predicate("acusa", (marquesa, elena)))
+
+    # "Victor declara que Elena estuvo con él en el vagón comedor"
+    kb.add_fact(Predicate("da_coartada", (victor, elena)))
+
+    # "Elena declara que Victor estuvo con ella en el vagón comedor"
+    kb.add_fact(Predicate("da_coartada", (elena, victor)))
+
+    # Reglas
+    x = Term("$X")
+    y = Term("$Y")
+    lugar = Term("$L")
+
+    # "Quien fue grabado en cámara en un lugar alejado de la escena está descartado"
+    kb.add_rule(Rule(
+        head=Predicate("descartado", (x,)),
+        body=[
+            Predicate("grabado_en_camara", (x, lugar)),
+            Predicate("lugar_alejado_de_escena", (lugar,)),
+        ]
+    ))
+
+    # "La víctima del crimen no tiene razón para mentir; es testigo imparcial"
+    kb.add_rule(Rule(
+        head=Predicate("testigo_imparcial", (x,)),
+        body=[Predicate("es_victima", (x,))]
+    ))
+
+    # "La acusación de un testigo imparcial es creíble"
+    kb.add_rule(Rule(
+        head=Predicate("acusacion_creible", (x, y)),
+        body=[
+            Predicate("acusa", (x, y)),
+            Predicate("testigo_imparcial", (x,)),
+        ]
+    ))
+
+    # "Quien estaba en la escena y es acusado de forma creíble es culpable"
+    kb.add_rule(Rule(
+        head=Predicate("culpable", (x,)),
+        body=[
+            Predicate("en_escena", (x,)),
+            Predicate("acusacion_creible", (y, x)),
+        ]
+    ))
+
+    # "Quien da coartada a un culpable lo está defendiendo"
+    kb.add_rule(Rule(
+        head=Predicate("defiende_al_culpable", (x,)),
+        body=[
+            Predicate("da_coartada", (x, y)),
+            Predicate("culpable", (y,)),
+        ]
+    ))
+
+    # "Si dos personas se dan coartada mutuamente, tienen una alianza de coartadas entre sí"
+    kb.add_rule(Rule(
+        head=Predicate("alianza_coartadas", (x, y)),
+        body=[
+            Predicate("da_coartada", (x, y)),
+            Predicate("da_coartada", (y, x)),
+        ]
+    ))
+
     # === END YOUR CODE ===
 
     return kb
